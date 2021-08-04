@@ -1,7 +1,7 @@
-diff --git a/mjpg-streamer-experimental/plugins/input_uvc/input_uvc.c b/mjpg-streamer-experimental/plugins/input_uvc/input_uvc.c
+diff --git aplugins/input_uvc/input_uvc.c b/plugins/input_uvc/input_uvc.c
 index 4ba1b9d..14049d8 100644
---- a/mjpg-streamer-experimental/plugins/input_uvc/input_uvc.c
-+++ b/mjpg-streamer-experimental/plugins/input_uvc/input_uvc.c
+--- a/plugins/input_uvc/input_uvc.c
++++ b/plugins/input_uvc/input_uvc.c
 @@ -138,7 +138,7 @@ Return Value: 0 if everything is fine
  int input_init(input_parameter *param, int id)
  {
