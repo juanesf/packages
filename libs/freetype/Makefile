@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2020-2021 HandsomeMod Project
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freetype
 PKG_VERSION:=2.10.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/freetype
@@ -20,12 +21,11 @@ PKG_LICENSE:=FTL GPL-2.0-only MIT ZLIB GPL-3.0-or-later
 PKG_LICENSE_FILES:=docs/LICENSE.TXT docs/FTL.TXT docs/GPLv2.TXT src/bdf/README src/pcf/README src/gzip/zlib.h builds/unix/config.sub builds/unix/config.guess builds/unix/libtool 
 PKG_CPE_ID:=cpe:/a:freetype:freetype2
 
-CMAKE_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
-CMAKE_BINARY_SUBDIR:=build
+PKG_BUILD_DEPENDS:=meson/host
 
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/meson/meson.mk
 
 define Package/libfreetype
   SECTION:=libs
@@ -42,18 +42,35 @@ define Package/libfreetype/description
  efficient and ubiquitous products.
 endef
 
-CMAKE_OPTIONS += \
-	-DBUILD_SHARED_LIBS=ON \
-	-DCMAKE_DISABLE_FIND_PACKAGE_BZip2=ON \
-	-DFT_WITH_ZLIB=ON \
-	-DFT_WITH_BZIP2=OFF \
-	-DFT_WITH_PNG=ON \
-	-DFT_WITH_HARFBUZZ=OFF \
-	-DFT_WITH_BROTLI=OFF
+MESON_ARGS += \
+	-Dzlib=system \
+	-Dbzip2=disabled \
+	-Dpng=enabled \
+	-Dharfbuzz=disabled \
+	-Dbrotli=disabled \
+	-Dmmap=enabled
+
+MESON_HOST_ARGS += \
+	-Dzlib=system \
+	-Dbzip2=disabled \
+	-Dpng=disabled \
+	-Dharfbuzz=disabled \
+	-Dbrotli=disabled \
+	-Dmmap=enabled
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include/freetype2
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/freetype2/* $(1)/usr/include/freetype2/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfreetype.{a,so}* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/freetype2.pc $(1)/usr/lib/pkgconfig/freetype2.pc
+endef
 
 define Package/libfreetype/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfreetype.so.* $(1)/usr/lib/
 endef
 
+$(eval $(call HostBuild))
 $(eval $(call BuildPackage,libfreetype))
