@@ -1,6 +1,7 @@
 name: Test Build packages
 
 on:
+  repository_dispatch:
   pull_request:
     branches:
       - master
