@@ -1,6 +1,7 @@
 #
 # Copyright (C) 2016 Velocloud Inc.
 # Copyright (C) 2016 Aleksander Morgado <aleksander@aleksander.es>
+# Copyright (C) 2020-2021 HandsomeMod Project
 #
 # This is free software, licensed under the GNU General Public License v2.
 #
@@ -8,15 +9,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modemmanager
-PKG_VERSION:=1.16.6
-PKG_RELEASE:=1
+PKG_VERSION:=1.18.2
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=ModemManager-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/ModemManager
-PKG_HASH:=2a90b6260f66d3135609d62667ada73416694d717e7fd9b73223e3703a499617
+PKG_HASH:=374be158ae1c1fb38a29eef1cc3cdf89ff3536b48ff1320d208ab204ea6c5f8a
 PKG_BUILD_DIR:=$(BUILD_DIR)/ModemManager-$(PKG_VERSION)
 
-PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
+PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
@@ -41,7 +42,8 @@ define Package/modemmanager
 	+dbus \
 	+ppp \
 	+MODEMMANAGER_WITH_MBIM:libmbim \
-	+MODEMMANAGER_WITH_QMI:libqmi
+	+MODEMMANAGER_WITH_QMI:libqmi \
+	+MODEMMANAGER_WITH_UDEV:libgudev
 endef
 
 define Package/modemmanager/description
@@ -52,8 +54,8 @@ endef
 
 CONFIGURE_ARGS += \
 	--without-polkit \
-	--without-udev \
 	--without-systemdsystemunitdir \
+	--enable-plugin-qcom-soc \
 	--disable-rpath \
 	--disable-gtk-doc
 
@@ -65,6 +67,12 @@ ifdef CONFIG_MODEMMANAGER_WITH_MBIM
   CONFIGURE_ARGS += --with-mbim
 else
   CONFIGURE_ARGS += --without-mbim
+endif
+
+ifdef CONFIG_MODEMMANAGER_WITH_UDEV
+  CONFIGURE_ARGS += --with-udev
+else
+  CONFIGURE_ARGS += --without-udev
 endif
 
 ifdef CONFIG_MODEMMANAGER_WITH_QMI
@@ -98,6 +106,7 @@ define Package/modemmanager/install
 
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ModemManager $(1)/usr/sbin
+	$(INSTALL_BIN) ./files/usr/sbin/ModemManager-wrapper $(1)/usr/sbin
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mmcli $(1)/usr/bin
@@ -130,6 +139,9 @@ define Package/modemmanager/install
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/tty
 	$(INSTALL_DATA) ./files/25-modemmanager-tty $(1)/etc/hotplug.d/tty
+
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/wwan
+	$(INSTALL_DATA) ./files/25-modemmanager-wwan $(1)/etc/hotplug.d/wwan
 
 	$(INSTALL_DIR) $(1)/lib/netifd/proto
 	$(INSTALL_BIN) ./files/modemmanager.proto $(1)/lib/netifd/proto/modemmanager.sh
